@@ -1,0 +1,12 @@
+{
+    "name": "trailer3d",
+    "version": "0.0.1",
+    "main": "build/trailer3d.js",
+    "description": "Trailer3D",
+    "readmeFilename": "README.md",
+    "dependencies": {
+        "jquery": "^2.1.4",
+        "jquery-mousewheel": "^3.1.13"
+    },
+    "devDependencies": {}
+}
