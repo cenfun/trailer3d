@@ -1,40 +1,145 @@
 define(function() {
     "use strict";
 
-    var Trailer3D = function(container) {
-        if (!container) {
-            container = document.createElement("div");
-            container.style.width = "100%";
-            container.style.height = "100%";
-            document.body.appendChild(container);
-        }
-        this.container = container;
-        this.canvas = document.createElement("canvas");
-        this.container.appendChild(this.canvas);
-        this.context = this.canvas.getContext('2d');
-        this.resize();
-    };
+    var THREE = require("THREE");
+    var OptionBase = require("../core/option-base.js");
+    var Tween = require("../tween/tween.js");
 
-    Trailer3D.prototype = {
+    var Trailer3D = OptionBase.extend({
 
         completed: false,
 
+        constructor: function(container) {
+            this.initRequestAnimationFrame();
+            this.initContainer(container);
+            this.init3D();
+            this.resize();
+        },
+
+        initContainer: function(container) {
+            if (!container) {
+                container = document.createElement("div");
+                container.style.width = "100%";
+                container.style.height = "100%";
+                document.body.appendChild(container);
+            }
+            this.container = container;
+        },
+
+        init3D: function() {
+
+            this.renderer = new THREE.WebGLRenderer();
+            //this.renderer.setClearColor(0xFFFFFF, 1);
+
+            this.scene = new THREE.Scene();
+
+        },
+
+        resize: function() {
+            var w = this.container.clientWidth;
+            var h = this.container.clientHeight;
+            if (!h) {
+                return;
+            }
+
+            this.renderer.setSize(w, h);
+
+            this.camera = new THREE.PerspectiveCamera(45, w / h, 1, 10000);
+            this.camera.position.z = 5;
+
+        },
+
+        //===========================================================================
+
+        initScene: function() {
+            var light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
+            light.position.set(10, 10, 20);
+            this.scene.add(light);
+
+            var geometry = new THREE.CubeGeometry(1, 1, 1);
+            var material = new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            });
+            this.cube = new THREE.Mesh(geometry, material);
+            this.cube.position.x = 1;
+            this.scene.add(this.cube);
+
+            this.cube2 = new THREE.Mesh(geometry, material);
+            this.cube2.position.x = -1;
+            this.scene.add(this.cube2);
+
+            this.container.appendChild(this.renderer.domElement);
+
+
+            this.tween = new Tween();
+
+            this.tween.start({
+                duration: 1000,
+                from: 0,
+                till: 1
+            });
+
+            var self = this;
+            this.tween.bind("onStart", function(e, d) {
+
+            }).bind("onUpdate", function(e, d) {
+                self.camera.position.x = d;
+            }).bind("onStop", function(e, d) {
+
+            }).bind("onComplete", function(e, d) {
+                this.start({
+                    from: this.till,
+                    till: this.from
+                });
+            });
+
+        },
+
+        render: function() {
+            this.trigger("onRenderStart");
+
+            this.tween.update();
+
+            this.cube.rotation.x += 0.02;
+            this.cube.rotation.y += 0.02;
+
+            this.cube2.rotation.x += 0.02;
+            this.cube2.rotation.y += 0.02;
+
+            this.renderer.render(this.scene, this.camera);
+
+            this.trigger("onRenderComplete");
+
+            this.play();
+        },
+
+        //===========================================================================
         start: function(story) {
             this.completed = false;
             this.initStory(story);
             if (!this.story.length) {
                 return;
             }
+
+            this.initScene();
+
             this.play();
         },
 
         play: function() {
 
+            var self = this;
+            this.time_loop = requestAnimationFrame(function() {
+                self.render();
+            });
+
         },
 
         stop: function() {
-
+            cancelAnimationFrame(this.time_loop);
         },
+
+        //===========================================================================
 
         initStory: function(story) {
             this.story = [];
@@ -72,6 +177,8 @@ define(function() {
             item.shape = shape;
             this.story.push(item);
         },
+
+        //===========================================================================
 
         createShape: function(item) {
             //===========================================
@@ -153,14 +260,27 @@ define(function() {
             return shape;
         },
 
-        resize: function() {
-            var w = this.container.clientWidth;
-            var h = this.container.clientHeight;
-            this.canvas.width = w;
-            this.canvas.height = h;
+        //init requestAnimationFrame
+        initRequestAnimationFrame: function() {
+            var pre = ["webkit", "moz", "ms"];
+            for (var i = 0; i < pre.length; i++) {
+                var item = pre[i];
+                if (!window.requestAnimationFrame) {
+                    window.requestAnimationFrame = window[item + "RequestAnimationFrame"];
+                    window.cancelAnimationFrame = window[item + "CancelAnimationFrame"];
+                }
+            }
+            // window.requestAnimationFrame diffrent params with window.setTimeout;
+            if (!window.cancelAnimationFrame) {
+                window.cancelAnimationFrame = window.clearTimeout;
+            }
+        },
+
+        toString: function() {
+            return "Trailer3D";
         }
 
-    };
+    });
 
 
     return Trailer3D;
