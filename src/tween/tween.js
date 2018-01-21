@@ -26,6 +26,16 @@ define(function() {
                     this[k] = option[k];
                 }
             }
+            this.initEasing();
+        },
+
+        initEasing: function() {
+            if (typeof(this.easing) === "string") {
+                this.easing = Easing[this.easing];
+            }
+            if (typeof(this.easing) !== "function") {
+                this.easing = Easing.linear;
+            }
         },
 
         start: function(option) {

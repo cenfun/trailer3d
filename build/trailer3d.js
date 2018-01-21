@@ -336,10 +336,10 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 
             this.container.appendChild(this.renderer.domElement);
 
-
             this.tween = new Tween();
 
             this.tween.start({
+                easing: "easeInOutQuad",
                 duration: 1000,
                 from: 0,
                 till: 1
@@ -46989,6 +46989,16 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
                 if (option.hasOwnProperty(k)) {
                     this[k] = option[k];
                 }
+            }
+            this.initEasing();
+        },
+
+        initEasing: function() {
+            if (typeof(this.easing) === "string") {
+                this.easing = Easing[this.easing];
+            }
+            if (typeof(this.easing) !== "function") {
+                this.easing = Easing.linear;
             }
         },
 

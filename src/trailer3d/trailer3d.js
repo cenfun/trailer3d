@@ -70,10 +70,10 @@ define(function() {
 
             this.container.appendChild(this.renderer.domElement);
 
-
             this.tween = new Tween();
 
             this.tween.start({
+                easing: "easeInOutQuad",
                 duration: 1000,
                 from: 0,
                 till: 1
