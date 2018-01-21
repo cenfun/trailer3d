@@ -294,7 +294,9 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 
         init3D: function() {
 
-            this.renderer = new THREE.WebGLRenderer();
+            this.renderer = new THREE.WebGLRenderer({
+                antialias: true
+            });
             //this.renderer.setClearColor(0xFFFFFF, 1);
 
             this.scene = new THREE.Scene();
@@ -310,34 +312,69 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 
             this.renderer.setSize(w, h);
 
-            this.camera = new THREE.PerspectiveCamera(45, w / h, 1, 10000);
-            this.camera.position.z = 5;
+            var camera = new THREE.PerspectiveCamera(45, w / h, 1, 10000);
+            camera.position.z = 5;
+
+            this.camera = camera;
 
         },
 
         //===========================================================================
 
-        initScene: function() {
-            var light = new THREE.DirectionalLight(0xFF0000, 1.0, 0);
-            light.position.set(10, 10, 20);
-            this.scene.add(light);
+        addLight: function() {
+            //var alight = new THREE.AmbientLight(0xffffff, 1);
+            //alight.position.set(100, 100, 200);
+            //this.scene.add(alight);
 
+            var dlight = new THREE.DirectionalLight(0xffff00);
+            dlight.position.set(0, 5, 5);
+            this.scene.add(dlight);
+
+            var plight = new THREE.PointLight(0xFF0000);
+            plight.position.set(0, 0, 50);
+            this.scene.add(plight);
+
+        },
+
+        addMesh: function() {
+            var geometry = new THREE.CubeGeometry(1, 1, 1, 4, 4);
+            var material = new THREE.MeshLambertMaterial({
+                color: 0xFFFFFF
+            });
+            var mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(-1, 0, 0);
+            this.scene.add(mesh);
+            this.mesh = mesh;
+        },
+
+        addCube: function() {
             var geometry = new THREE.CubeGeometry(1, 1, 1);
-            var material = new THREE.MeshBasicMaterial({
-                color: 0xffffff
+            var material = new THREE.MeshLambertMaterial({
+                color: 0xFFFFFF
             });
             this.cube = new THREE.Mesh(geometry, material);
-            this.cube.position.x = 1;
+            this.cube.position.set(1, 0, 0);
             this.scene.add(this.cube);
+        },
 
-            this.cube2 = new THREE.Mesh(geometry, material);
-            this.cube2.position.x = -1;
-            this.scene.add(this.cube2);
+        //===========================================================================
+        initScene: function() {
+
+            this.addLight();
+
+
+            this.addMesh();
+            this.addCube();
+
 
             this.container.appendChild(this.renderer.domElement);
 
-            this.tween = new Tween();
+            this.initTween();
 
+        },
+
+        initTween: function() {
+            this.tween = new Tween();
             this.tween.start({
                 easing: "easeInOutQuad",
                 duration: 1000,
@@ -358,7 +395,6 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
                     till: this.from
                 });
             });
-
         },
 
         render: function() {
@@ -369,8 +405,8 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
             this.cube.rotation.x += 0.02;
             this.cube.rotation.y += 0.02;
 
-            this.cube2.rotation.x += 0.02;
-            this.cube2.rotation.y += 0.02;
+            this.mesh.rotation.x += 0.02;
+            this.mesh.rotation.y += 0.02;
 
             this.renderer.render(this.scene, this.camera);
 
