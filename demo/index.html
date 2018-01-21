@@ -44,10 +44,10 @@
     (function() {
         'use strict';
 
-        //var stats = new Stats();
-        //stats.showPanel(1);
-        //stats.dom.className = "stats";
-        //document.body.appendChild(stats.dom);
+        var stats = new Stats();
+        stats.showPanel(1);
+        stats.dom.className = "stats";
+        document.body.appendChild(stats.dom);
 
         var story = [{
             delay: 0,
@@ -76,9 +76,9 @@
         var container = document.querySelector(".container");
         var trailer = new window.Trailer3D(container);
         trailer.bind("onRenderStart", function() {
-            //stats.begin();
+            stats.begin();
         }).bind("onRenderComplete", function() {
-            //stats.end();
+            stats.end();
         });
 
 
