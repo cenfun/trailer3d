@@ -376,7 +376,8 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
         initTween: function() {
             this.tween = new Tween();
             this.tween.start({
-                easing: "easeInOutQuad",
+                //Quadratic.InOut
+                easing: "Sinusoidal.InOut",
                 duration: 1000,
                 from: 0,
                 till: 1
@@ -47012,7 +47013,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
         stopped: true,
 
         //default option
-        easing: Easing.linear,
+        easing: Easing.Linear.None,
         duration: 100,
         from: 0,
         till: 1,
@@ -47031,10 +47032,10 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 
         initEasing: function() {
             if (typeof(this.easing) === "string") {
-                this.easing = Easing[this.easing];
+                this.easing = Util.getValue(Easing, this.easing, Easing.Linear.None);
             }
             if (typeof(this.easing) !== "function") {
-                this.easing = Easing.linear;
+                this.easing = Easing.Linear.None;
             }
         },
 
@@ -47065,7 +47066,9 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
             var t = now - this.time;
             var d = this.duration;
             if (t < d) {
-                var data = this.calculate(t, d, this.from, this.till, this.from);
+                var k = t / d;
+                var p = this.easing.call(this, k);
+                var data = this.calculate(p, this.from, this.till, this.from);
                 //update callback
                 this.updateData(data);
                 return this;
@@ -47080,46 +47083,45 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
             return this;
         },
 
-        calculate_array: function(t, d, from, till, self) {
+        calculate_array: function(p, from, till, self) {
             //if array
             var v = [];
             for (var i = 0, l = from.length; i < l; i++) {
                 if (till[i] === undefined || from[i] === self) {
                     v[i] = from[i];
                 } else {
-                    v[i] = this.calculate(t, d, from[i], till[i], self);
+                    v[i] = this.calculate(p, from[i], till[i], self);
                 }
             }
             return v;
         },
 
-        calculate_object: function(t, d, from, till, self) {
+        calculate_object: function(p, from, till, self) {
             //if object
             var v = {};
             for (var k in from) {
                 if (till[k] === undefined || from[k] === self) {
                     v[k] = from[k];
                 } else {
-                    v[k] = this.calculate(t, d, from[k], till[k], self);
+                    v[k] = this.calculate(p, from[k], till[k], self);
                 }
             }
             return v;
         },
 
         //stop loop calculate if back to self
-        calculate: function(t, d, from, till, self) {
+        calculate: function(p, from, till, self) {
 
             if (typeof(from) === "object" && typeof(till) === "object") {
                 if (from instanceof Array && till instanceof Array) {
-                    return this.calculate_array(t, d, from, till, self);
+                    return this.calculate_array(p, from, till, self);
                 } else {
-                    return this.calculate_object(t, d, from, till, self);
+                    return this.calculate_object(p, from, till, self);
                 }
             } else if (Util.isnum(from) && Util.isnum(till)) {
                 //must be number
-                var b = from;
-                var c = till - b;
-                return this.easing.call(this, t, b, c, d);
+                var v = (till - from) * p + from;
+                return v;
             } else {
                 //just return from value if NOT number
                 return from;
@@ -47392,50 +47394,189 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() {
-
     "use strict";
-
+    //http://tweenjs.github.io/tween.js/examples/03_graphs.html
     var Easing = {
-
-        linear: function(t, b, c, d) {
-            return c * t / d + b;
-        },
-
-        easeInQuad: function(t, b, c, d) {
-            return c * (t /= d) * t + b;
-        },
-
-        easeOutQuad: function(t, b, c, d) {
-            return -c * (t /= d) * (t - 2) + b;
-        },
-
-        easeInOutQuad: function(t, b, c, d) {
-            if ((t /= d / 2) < 1) {
-                return c / 2 * t * t + b;
+        Linear: {
+            None: function(k) {
+                return k;
             }
-            return -c / 2 * ((--t) * (t - 2) - 1) + b;
         },
-
-        easeInCubic: function(t, b, c, d) {
-            return c * (t /= d) * t * t + b;
-        },
-
-        easeOutCubic: function(t, b, c, d) {
-            return c * ((t = t / d - 1) * t * t + 1) + b;
-        },
-
-        easeInOutCubic: function(t, b, c, d) {
-            if ((t /= d / 2) < 1) {
-                return c / 2 * t * t * t + b;
+        Quadratic: {
+            In: function(k) {
+                return k * k;
+            },
+            Out: function(k) {
+                return k * (2 - k);
+            },
+            InOut: function(k) {
+                if ((k *= 2) < 1) {
+                    return 0.5 * k * k;
+                }
+                return -0.5 * (--k * (k - 2) - 1);
             }
-            return c / 2 * ((t -= 2) * t * t + 2) + b;
+        },
+        Cubic: {
+            In: function(k) {
+                return k * k * k;
+            },
+            Out: function(k) {
+                return --k * k * k + 1;
+            },
+            InOut: function(k) {
+                if ((k *= 2) < 1) {
+                    return 0.5 * k * k * k;
+                }
+                return 0.5 * ((k -= 2) * k * k + 2);
+            }
+        },
+        Quartic: {
+            In: function(k) {
+                return k * k * k * k;
+            },
+            Out: function(k) {
+                return 1 - (--k * k * k * k);
+            },
+            InOut: function(k) {
+                if ((k *= 2) < 1) {
+                    return 0.5 * k * k * k * k;
+                }
+                return -0.5 * ((k -= 2) * k * k * k - 2);
+            }
+        },
+        Quintic: {
+            In: function(k) {
+                return k * k * k * k * k;
+            },
+            Out: function(k) {
+                return --k * k * k * k * k + 1;
+            },
+            InOut: function(k) {
+                if ((k *= 2) < 1) {
+                    return 0.5 * k * k * k * k * k;
+                }
+                return 0.5 * ((k -= 2) * k * k * k * k + 2);
+            }
+        },
+        Sinusoidal: {
+            In: function(k) {
+                return 1 - Math.cos(k * Math.PI / 2);
+            },
+            Out: function(k) {
+                return Math.sin(k * Math.PI / 2);
+            },
+            InOut: function(k) {
+                return 0.5 * (1 - Math.cos(Math.PI * k));
+            }
+        },
+        Exponential: {
+            In: function(k) {
+                return k === 0 ? 0 : Math.pow(1024, k - 1);
+            },
+            Out: function(k) {
+                return k === 1 ? 1 : 1 - Math.pow(2, -10 * k);
+            },
+            InOut: function(k) {
+                if (k === 0) {
+                    return 0;
+                }
+                if (k === 1) {
+                    return 1;
+                }
+                if ((k *= 2) < 1) {
+                    return 0.5 * Math.pow(1024, k - 1);
+                }
+                return 0.5 * (-Math.pow(2, -10 * (k - 1)) + 2);
+            }
+        },
+        Circular: {
+            In: function(k) {
+                return 1 - Math.sqrt(1 - k * k);
+            },
+            Out: function(k) {
+                return Math.sqrt(1 - (--k * k));
+            },
+            InOut: function(k) {
+                if ((k *= 2) < 1) {
+                    return -0.5 * (Math.sqrt(1 - k * k) - 1);
+                }
+                return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
+            }
+        },
+        Elastic: {
+            In: function(k) {
+                if (k === 0) {
+                    return 0;
+                }
+                if (k === 1) {
+                    return 1;
+                }
+                return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+            },
+            Out: function(k) {
+                if (k === 0) {
+                    return 0;
+                }
+                if (k === 1) {
+                    return 1;
+                }
+                return Math.pow(2, -10 * k) * Math.sin((k - 0.1) * 5 * Math.PI) + 1;
+            },
+            InOut: function(k) {
+                if (k === 0) {
+                    return 0;
+                }
+                if (k === 1) {
+                    return 1;
+                }
+                k *= 2;
+                if (k < 1) {
+                    return -0.5 * Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+                }
+                return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
+            }
+        },
+        Back: {
+            In: function(k) {
+                var s = 1.70158;
+                return k * k * ((s + 1) * k - s);
+            },
+            Out: function(k) {
+                var s = 1.70158;
+                return --k * k * ((s + 1) * k + s) + 1;
+            },
+            InOut: function(k) {
+                var s = 1.70158 * 1.525;
+                if ((k *= 2) < 1) {
+                    return 0.5 * (k * k * ((s + 1) * k - s));
+                }
+                return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
+            }
+        },
+        Bounce: {
+            In: function(k) {
+                return 1 - Easing.Bounce.Out(1 - k);
+            },
+            Out: function(k) {
+                if (k < (1 / 2.75)) {
+                    return 7.5625 * k * k;
+                } else if (k < (2 / 2.75)) {
+                    return 7.5625 * (k -= (1.5 / 2.75)) * k + 0.75;
+                } else if (k < (2.5 / 2.75)) {
+                    return 7.5625 * (k -= (2.25 / 2.75)) * k + 0.9375;
+                } else {
+                    return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375;
+                }
+            },
+            InOut: function(k) {
+                if (k < 0.5) {
+                    return Easing.Bounce.In(k * 2) * 0.5;
+                }
+                return Easing.Bounce.Out(k * 2 - 1) * 0.5 + 0.5;
+            }
         }
-
     };
-
-
     return Easing;
-
 }).call(exports, __webpack_require__, exports, module),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 

@@ -110,7 +110,8 @@ define(function() {
         initTween: function() {
             this.tween = new Tween();
             this.tween.start({
-                easing: "easeInOutQuad",
+                //Quadratic.InOut
+                easing: "Sinusoidal.InOut",
                 duration: 1000,
                 from: 0,
                 till: 1

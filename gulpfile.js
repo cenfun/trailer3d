@@ -39,10 +39,8 @@ gulp.task("min", function() {
     browserSync.notify("minify building ...");
 
     var myConfig = Object.create(webpackConfig);
-
-    //add.min for filename
     myConfig.output.filename = build_name + ".min.js";
-
+    myConfig.devtool = "#source-map";
     myConfig.plugins = [
         new webpack.optimize.UglifyJsPlugin({
             compress: {
@@ -87,5 +85,5 @@ gulp.task('watch', function() {
 
 gulp.task("inject", function() {
 
-   
+
 });
