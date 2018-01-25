@@ -8,8 +8,6 @@
         "start": "gulp"
     },
     "dependencies": {
-        "jquery": "^2.2.4",
-        "jquery-mousewheel": "^3.1.13",
         "stats.js": "github:mrdoob/stats.js",
         "three": "^0.89.0"
     },
