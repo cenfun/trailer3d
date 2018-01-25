@@ -46,8 +46,16 @@ define(function() {
 
             this.renderer.setSize(w, h);
 
-            var camera = new THREE.PerspectiveCamera(45, w / h, 1, 10000);
-            camera.position.z = 5;
+            var camera = new THREE.PerspectiveCamera(50, w / h, 1, 10000);
+            camera.position.x = 0;
+            camera.position.y = 3;
+            camera.position.z = 15;
+
+            camera.up.x = 0;
+            camera.up.y = 1;
+            camera.up.z = 0;
+
+            camera.lookAt(0, 0, -20);
 
             this.camera = camera;
 
@@ -67,6 +75,36 @@ define(function() {
             var plight = new THREE.PointLight(0xFF0000);
             plight.position.set(0, 0, 50);
             this.scene.add(plight);
+
+        },
+
+        addAxis: function() {
+            var materialx = new THREE.LineBasicMaterial({
+                color: 0xff0000
+            });
+            var geometryx = new THREE.Geometry();
+            geometryx.vertices.push(new THREE.Vector3(-5, 0, 0));
+            geometryx.vertices.push(new THREE.Vector3(5, 0, 0));
+            var linex = new THREE.Line(geometryx, materialx, THREE.LineSegments);
+            this.scene.add(linex);
+
+            var materialy = new THREE.LineBasicMaterial({
+                color: 0x00ff00
+            });
+            var geometryy = new THREE.Geometry();
+            geometryy.vertices.push(new THREE.Vector3(0, -5, 0));
+            geometryy.vertices.push(new THREE.Vector3(0, 5, 0));
+            var liney = new THREE.Line(geometryy, materialy, THREE.LineSegments);
+            this.scene.add(liney);
+
+            var materialz = new THREE.LineBasicMaterial({
+                color: 0x0000ff
+            });
+            var geometryz = new THREE.Geometry();
+            geometryz.vertices.push(new THREE.Vector3(0, 0, -5));
+            geometryz.vertices.push(new THREE.Vector3(0, 0, 5));
+            var linez = new THREE.Line(geometryz, materialz, THREE.LineSegments);
+            this.scene.add(linez);
 
         },
 
@@ -96,6 +134,7 @@ define(function() {
 
             this.addLight();
 
+            this.addAxis();
 
             this.addMesh();
             this.addCube();
@@ -113,7 +152,7 @@ define(function() {
                 //Quadratic.InOut
                 easing: "Sinusoidal.InOut",
                 duration: 1000,
-                from: 0,
+                from: -1,
                 till: 1
             });
 
