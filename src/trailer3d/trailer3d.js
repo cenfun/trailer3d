@@ -9,6 +9,9 @@ define(function() {
 
         completed: false,
 
+        mouseX: 0,
+        mouseY: 0,
+
         constructor: function(container) {
             this.initRequestAnimationFrame();
             this.initContainer(container);
@@ -24,17 +27,56 @@ define(function() {
                 document.body.appendChild(container);
             }
             this.container = container;
+
+            var self = this;
+            this.container.addEventListener('mousemove', function(e) {
+                self.onMousemove(e);
+            }, false);
+        },
+
+        onMousemove: function(e) {
+            this.mouseX = (e.clientX - this.width * 0.5) * 0.25;
+            this.mouseY = (e.clientY - this.height * 0.5) * 0.15;
+        },
+
+        initBackground: function() {
+            var canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = this.height;
+            var context = canvas.getContext('2d');
+            var gradient = context.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, "#1e4877");
+            gradient.addColorStop(0.5, "#4584b4");
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            this.container.style.background = 'url(' + canvas.toDataURL('image/png') + ')';
+            this.container.style.backgroundSize = '32px 100%';
         },
 
         init3D: function() {
 
             this.renderer = new THREE.WebGLRenderer({
-                antialias: true
+                alpha: true,
+                antialias: false
             });
-            //this.renderer.setClearColor(0xFFFFFF, 1);
 
             this.scene = new THREE.Scene();
 
+            this.initCamera();
+
+        },
+
+        initCamera: function() {
+            var camera = new THREE.PerspectiveCamera(50, 1, 1, 10000);
+            camera.position.x = 0;
+            camera.position.y = 3;
+            camera.position.z = 15;
+            camera.up.x = 0;
+            camera.up.y = 1;
+            camera.up.z = 0;
+            camera.lookAt(0, 0, -20);
+            this.camera = camera;
         },
 
         resize: function() {
@@ -44,20 +86,15 @@ define(function() {
                 return;
             }
 
+            this.width = w;
+            this.height = h;
+
+            this.initBackground();
+
             this.renderer.setSize(w, h);
 
-            var camera = new THREE.PerspectiveCamera(50, w / h, 1, 10000);
-            camera.position.x = 0;
-            camera.position.y = 3;
-            camera.position.z = 15;
-
-            camera.up.x = 0;
-            camera.up.y = 1;
-            camera.up.z = 0;
-
-            camera.lookAt(0, 0, -20);
-
-            this.camera = camera;
+            this.camera.aspect = w / h;
+            this.camera.updateProjectionMatrix();
 
         },
 
@@ -129,6 +166,64 @@ define(function() {
             this.scene.add(this.cube);
         },
 
+        addCloud: function() {
+            var geometry = new THREE.Geometry();
+
+            var texture = new THREE.TextureLoader().load('textures/cloud10.png');
+            texture.magFilter = THREE.LinearMipMapLinearFilter;
+            texture.minFilter = THREE.LinearMipMapLinearFilter;
+
+            var fog = new THREE.Fog(0x4584b4, -100, 3000);
+
+            var material = new THREE.ShaderMaterial({
+                uniforms: {
+                    "map": {
+                        type: "t",
+                        value: texture
+                    },
+                    "fogColor": {
+                        type: "c",
+                        value: fog.color
+                    },
+                    "fogNear": {
+                        type: "f",
+                        value: fog.near
+                    },
+                    "fogFar": {
+                        type: "f",
+                        value: fog.far
+                    }
+                },
+                vertexShader: document.getElementById('vs').textContent,
+                fragmentShader: document.getElementById('fs').textContent,
+                depthWrite: false,
+                depthTest: false,
+                transparent: true
+
+            });
+
+            var plane = new THREE.Mesh(new THREE.PlaneGeometry(64, 64));
+
+            for (var i = 0; i < 8000; i++) {
+
+                plane.position.x = Math.random() * 1000 - 500;
+                plane.position.y = -Math.random() * Math.random() * 200 - 15;
+                plane.position.z = i;
+                plane.rotation.z = Math.random() * Math.PI;
+                plane.scale.x = plane.scale.y = Math.random() * Math.random() * 1.5 + 0.5;
+
+                geometry.mergeMesh(plane);
+
+            }
+
+            var mesh = new THREE.Mesh(geometry, material);
+            this.scene.add(mesh);
+
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.position.z = -8000;
+            this.scene.add(mesh);
+        },
+
         //===========================================================================
         initScene: function() {
 
@@ -138,6 +233,8 @@ define(function() {
 
             this.addMesh();
             this.addCube();
+
+            this.addCloud();
 
 
             this.container.appendChild(this.renderer.domElement);
@@ -171,33 +268,33 @@ define(function() {
             });
         },
 
+        //===========================================================================
+
         render: function() {
             this.trigger("onRenderStart");
 
             this.tween.update();
 
-            this.cube.rotation.x += 0.02;
-            this.cube.rotation.y += 0.02;
+            this.position = ((Date.now() - this.start_time) * 0.03) % 8000;
+            var camera = this.camera;
+            camera.position.x += (this.mouseX - camera.position.x) * 0.01;
+            camera.position.y += (-this.mouseY - camera.position.y) * 0.01;
+            //camera.position.z = -this.position + 8000;
 
-            this.mesh.rotation.x += 0.02;
-            this.mesh.rotation.y += 0.02;
+
+            if (this.cube) {
+                this.cube.rotation.x += 0.02;
+                this.cube.rotation.y += 0.02;
+            }
+
+            if (this.mesh) {
+                this.mesh.rotation.x += 0.02;
+                this.mesh.rotation.y += 0.02;
+            }
 
             this.renderer.render(this.scene, this.camera);
 
             this.trigger("onRenderComplete");
-
-            this.play();
-        },
-
-        //===========================================================================
-        start: function(story) {
-            this.completed = false;
-            this.initStory(story);
-            if (!this.story.length) {
-                return;
-            }
-
-            this.initScene();
 
             this.play();
         },
@@ -213,6 +310,22 @@ define(function() {
 
         stop: function() {
             cancelAnimationFrame(this.time_loop);
+        },
+
+        //===========================================================================
+
+        start: function(story) {
+            this.completed = false;
+            this.initStory(story);
+            if (!this.story.length) {
+                return;
+            }
+
+            this.start_time = Date.now();
+
+            this.initScene();
+
+            this.play();
         },
 
         //===========================================================================
