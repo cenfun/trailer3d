@@ -8,13 +8,13 @@
         "start": "gulp"
     },
     "dependencies": {
-        "stats.js": "github:mrdoob/stats.js",
         "three": "^0.89.0"
     },
     "devDependencies": {
         "browser-sync": "^2.23.5",
         "gulp": "^3.9.1",
         "gulp-inject": "^4.3.0",
+        "raw-loader": "^0.5.1",
         "webpack": "^3.10.0"
     }
 }

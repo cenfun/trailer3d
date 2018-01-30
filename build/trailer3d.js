@@ -271,6 +271,10 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
     var OptionBase = __webpack_require__(0);
     var Tween = __webpack_require__(8);
 
+    var vertexShader = __webpack_require__(11);
+    var fragmentShader = __webpack_require__(12);
+    //console.log(vertexShader, fragmentShader);
+
     var Trailer3D = OptionBase.extend({
 
         completed: false,
@@ -324,7 +328,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 
             this.renderer = new THREE.WebGLRenderer({
                 alpha: true,
-                antialias: false
+                antialias: true
             });
 
             this.scene = new THREE.Scene();
@@ -334,13 +338,13 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
         },
 
         initCamera: function() {
-            var camera = new THREE.PerspectiveCamera(50, 1, 1, 10000);
+            var camera = new THREE.PerspectiveCamera(35, 1, 1, 10000);
             camera.position.x = 0;
-            camera.position.y = 3;
-            camera.position.z = 15;
-            camera.up.x = 0;
-            camera.up.y = 1;
-            camera.up.z = 0;
+            camera.position.y = 20;
+            camera.position.z = 200;
+            //camera.up.x = 0;
+            //camera.up.y = 0;
+            //camera.up.z = 0;
             camera.lookAt(0, 0, -20);
             this.camera = camera;
         },
@@ -371,17 +375,22 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
             //alight.position.set(100, 100, 200);
             //this.scene.add(alight);
 
-            var dlight = new THREE.DirectionalLight(0xffff00);
+            var dlight = new THREE.DirectionalLight(0xffffff);
             dlight.position.set(0, 5, 5);
             this.scene.add(dlight);
 
-            var plight = new THREE.PointLight(0xFF0000);
-            plight.position.set(0, 0, 50);
-            this.scene.add(plight);
+            //var plight = new THREE.PointLight(0xFF0000);
+            //plight.position.set(0, 0, 50);
+            //this.scene.add(plight);
 
         },
 
         addAxis: function() {
+
+            var axes = new THREE.AxesHelper(10);
+            this.scene.add(axes);
+
+            /*
             var materialx = new THREE.LineBasicMaterial({
                 color: 0xff0000
             });
@@ -408,6 +417,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
             geometryz.vertices.push(new THREE.Vector3(0, 0, 5));
             var linez = new THREE.Line(geometryz, materialz, THREE.LineSegments);
             this.scene.add(linez);
+            */
 
         },
 
@@ -433,9 +443,33 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
         },
 
         addCloud: function() {
-            var geometry = new THREE.Geometry();
 
-            var texture = new THREE.TextureLoader().load('textures/cloud10.png');
+            //=====================================================================
+            var geometry = new THREE.Geometry();
+            var plane = new THREE.Mesh(new THREE.PlaneGeometry(64, 64));
+
+            var deep = 100;
+            var width = 1000;
+            var height = 20;
+
+            for (var i = 0; i < deep; i++) {
+
+                plane.position.x = (Math.random() - 0.5) * width;
+                plane.position.y = (Math.random() - 0.5) * height;
+                plane.position.z = i;
+
+                plane.rotation.z = Math.random() * Math.PI;
+
+                plane.scale.x = Math.random() * Math.random() * 1.5 + 0.5;
+                plane.scale.y = plane.scale.x;
+
+                geometry.mergeMesh(plane);
+
+            }
+
+            //=====================================================================
+            var textureLoader = new THREE.TextureLoader();
+            var texture = textureLoader.load('textures/cloud0.png');
             texture.magFilter = THREE.LinearMipMapLinearFilter;
             texture.minFilter = THREE.LinearMipMapLinearFilter;
 
@@ -443,51 +477,67 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 
             var material = new THREE.ShaderMaterial({
                 uniforms: {
-                    "map": {
+                    map: {
                         type: "t",
                         value: texture
                     },
-                    "fogColor": {
+                    fogColor: {
                         type: "c",
                         value: fog.color
                     },
-                    "fogNear": {
+                    fogNear: {
                         type: "f",
                         value: fog.near
                     },
-                    "fogFar": {
+                    fogFar: {
                         type: "f",
                         value: fog.far
                     }
                 },
-                vertexShader: document.getElementById('vs').textContent,
-                fragmentShader: document.getElementById('fs').textContent,
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
                 depthWrite: false,
                 depthTest: false,
                 transparent: true
-
             });
 
-            var plane = new THREE.Mesh(new THREE.PlaneGeometry(64, 64));
 
-            for (var i = 0; i < 8000; i++) {
+            //=====================================================================
+            //this.cloud1 = new THREE.Mesh(geometry, material);
+            //this.scene.add(this.cloud1);
 
-                plane.position.x = Math.random() * 1000 - 500;
-                plane.position.y = -Math.random() * Math.random() * 200 - 15;
-                plane.position.z = i;
-                plane.rotation.z = Math.random() * Math.PI;
-                plane.scale.x = plane.scale.y = Math.random() * Math.random() * 1.5 + 0.5;
+            this.cloud2 = new THREE.Mesh(geometry, material);
+            this.cloud2.position.z = -deep;
+            this.scene.add(this.cloud2);
+        },
 
-                geometry.mergeMesh(plane);
 
+        addShape: function() {
+
+            var shape = this.story[0].shape;
+            var shapeData = shape.shapeData;
+            var total = shapeData.length;
+
+            this.deep = 1000;
+
+            this.list = [];
+
+            for (var i = 0; i < total; i++) {
+
+                var sphereGeometry = new THREE.SphereBufferGeometry(1, 10, 10);
+                var sphereMaterial = new THREE.MeshLambertMaterial({
+                    transparent: true,
+                    //opacity: 0,
+                    color: 0xffffff
+                });
+                var sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+                sphere.position.x = this.width * (Math.random() - 0.5);
+                sphere.position.y = this.height * (Math.random() - 0.5);
+                sphere.position.z = this.deep * (Math.random() - 0.5);
+                this.scene.add(sphere);
+                this.list.push(sphere);
             }
 
-            var mesh = new THREE.Mesh(geometry, material);
-            this.scene.add(mesh);
-
-            mesh = new THREE.Mesh(geometry, material);
-            mesh.position.z = -8000;
-            this.scene.add(mesh);
         },
 
         //===========================================================================
@@ -497,10 +547,12 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 
             this.addAxis();
 
-            this.addMesh();
-            this.addCube();
+            //this.addMesh();
+            //this.addCube();
 
-            this.addCloud();
+            //this.addCloud();
+
+            this.addShape();
 
 
             this.container.appendChild(this.renderer.domElement);
@@ -510,27 +562,71 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
         },
 
         initTween: function() {
+
+            this.from = {
+                shakeOffset: -10,
+                opacity: 0,
+                list: []
+            };
+
+            this.till = {
+                shakeOffset: 10,
+                opacity: 1,
+                list: []
+            };
+
+            var shape = this.story[0].shape;
+            var shapeData = shape.shapeData;
+
+            for (var i = 0, l = this.list.length; i < l; i++) {
+                var item = this.list[i];
+
+                this.from.list[i] = {
+                    x: item.position.x,
+                    y: item.position.y,
+                    z: item.position.z
+                };
+
+                var p = shapeData[i];
+
+                this.till.list[i] = {
+                    x: p.x - shape.width * 0.5,
+                    y: -p.y + shape.height * 0.5,
+                    z: 0
+                };
+
+            }
+
+
             this.tween = new Tween();
             this.tween.start({
                 //Quadratic.InOut
                 easing: "Sinusoidal.InOut",
                 duration: 1000,
-                from: -1,
-                till: 1
+                from: this.from,
+                till: this.till
             });
 
             var self = this;
             this.tween.bind("onStart", function(e, d) {
 
             }).bind("onUpdate", function(e, d) {
-                self.camera.position.x = d;
+                self.data = d;
             }).bind("onStop", function(e, d) {
 
             }).bind("onComplete", function(e, d) {
-                this.start({
-                    from: this.till,
-                    till: this.from
-                });
+
+                setTimeout(function() {
+                    var temp = self.till;
+                    self.till = self.from;
+                    self.from = temp;
+
+                    self.tween.start({
+                        from: self.from,
+                        till: self.till
+                    });
+                }, 2000);
+
             });
         },
 
@@ -541,13 +637,30 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
 
             this.tween.update();
 
-            this.position = ((Date.now() - this.start_time) * 0.03) % 8000;
-            var camera = this.camera;
-            camera.position.x += (this.mouseX - camera.position.x) * 0.01;
-            camera.position.y += (-this.mouseY - camera.position.y) * 0.01;
-            //camera.position.z = -this.position + 8000;
+            //this.positionZ -= 1;
+
+            //console.log(this.positionZ);
 
 
+            //var camera = this.camera;
+            //camera.position.x += (this.mouseX - camera.position.x) * 0.01;
+            //camera.position.y += (-this.mouseY - camera.position.y) * 0.01;
+            //camera.position.z = this.positionZ;
+
+            //this.camera.position.x = this.data.shakeOffset;
+
+            for (var i = 0, l = this.list.length; i < l; i++) {
+                var item = this.list[i];
+
+                var p = this.data.list[i];
+                item.position.x = p.x;
+                item.position.y = p.y;
+                item.position.z = p.z;
+                item.material.opacity = this.data.opacity;
+
+            }
+
+            /*
             if (this.cube) {
                 this.cube.rotation.x += 0.02;
                 this.cube.rotation.y += 0.02;
@@ -557,6 +670,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
                 this.mesh.rotation.x += 0.02;
                 this.mesh.rotation.y += 0.02;
             }
+            */
 
             this.renderer.render(this.scene, this.camera);
 
@@ -587,7 +701,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
                 return;
             }
 
-            this.start_time = Date.now();
+            this.positionZ = 0;
 
             this.initScene();
 
@@ -47731,6 +47845,18 @@ var __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_RESULT__ = (function() 
     return Easing;
 }).call(exports, __webpack_require__, exports, module),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+module.exports = "varying vec2 vUv; \r\nvoid main() { \r\n    vUv = uv; \r\n    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); \r\n}"
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+module.exports = "uniform sampler2D map; \r\nuniform vec3 fogColor; \r\nuniform float fogNear; \r\nuniform float fogFar; \r\nvarying vec2 vUv; \r\nvoid main() { \r\n    float depth = gl_FragCoord.z / gl_FragCoord.w; \r\n    float fogFactor = smoothstep( fogNear, fogFar, depth ); \r\n    gl_FragColor = texture2D( map, vUv ); \r\n    gl_FragColor.w *= pow( gl_FragCoord.z, 20.0 ); \r\n    gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor ); \r\n}\r\n"
 
 /***/ })
 /******/ ]);

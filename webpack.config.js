@@ -18,7 +18,7 @@ module.exports = {
             test: /\.json$/,
             loader: "json"
         }, {
-            test: /\.(html|txt)$/,
+            test: /\.(html|txt|vsh|fsh)$/,
             loader: "raw-loader"
         }]
     },
