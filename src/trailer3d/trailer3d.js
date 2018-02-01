@@ -248,9 +248,7 @@ define(function() {
 
         addShape: function() {
 
-            var shape = this.story[0].shape;
-            var shapeData = shape.shapeData;
-            var total = shapeData.length;
+            var total = 1000;
 
             this.deep = 1000;
 
@@ -295,8 +293,8 @@ define(function() {
 
         },
 
-        initTween: function() {
-
+        flyIn: function() {
+            this.flyType = "in";
             this.from = {
                 shakeOffset: -10,
                 opacity: 0,
@@ -312,9 +310,9 @@ define(function() {
             var shape = this.story[0].shape;
             var shapeData = shape.shapeData;
 
-            for (var i = 0, l = this.list.length; i < l; i++) {
-                var item = this.list[i];
+            for (var i = 0, l = shapeData.length; i < l; i++) {
 
+                var item = this.list[i];
                 this.from.list[i] = {
                     x: item.position.x,
                     y: item.position.y,
@@ -331,37 +329,76 @@ define(function() {
 
             }
 
-
-            this.tween = new Tween();
             this.tween.start({
-                //Quadratic.InOut
                 easing: "Sinusoidal.InOut",
                 duration: 1000,
                 from: this.from,
                 till: this.till
             });
+        },
 
-            var self = this;
-            this.tween.bind("onStart", function(e, d) {
+        flyOut: function() {
+            this.flyType = "out";
+            this.from = {
+                shakeOffset: 10,
+                opacity: 1,
+                list: []
+            };
 
-            }).bind("onUpdate", function(e, d) {
-                self.data = d;
-            }).bind("onStop", function(e, d) {
+            this.till = {
+                shakeOffset: -10,
+                opacity: 0,
+                list: []
+            };
 
-            }).bind("onComplete", function(e, d) {
+            var shape = this.story[0].shape;
+            var shapeData = shape.shapeData;
 
-                setTimeout(function() {
-                    var temp = self.till;
-                    self.till = self.from;
-                    self.from = temp;
+            for (var i = 0, l = shapeData.length; i < l; i++) {
+                var item = this.list[i];
 
-                    self.tween.start({
-                        from: self.from,
-                        till: self.till
-                    });
-                }, 2000);
+                this.from.list[i] = {
+                    x: item.position.x,
+                    y: item.position.y,
+                    z: item.position.z
+                };
 
+                //var p = shapeData[i];
+
+                this.till.list[i] = {
+                    x: this.width * (Math.random() - 0.5),
+                    y: this.height * (Math.random() - 0.5),
+                    z: this.deep * (Math.random() - 0.5)
+                };
+
+            }
+
+            this.tween.start({
+                easing: "Sinusoidal.InOut",
+                duration: 1000,
+                from: this.from,
+                till: this.till
             });
+        },
+
+
+        initTween: function() {
+
+            this.tween = new Tween();
+            var self = this;
+            this.tween.bind("onUpdate", function(e, d) {
+                self.data = d;
+            }).bind("onComplete", function(e, d) {
+                setTimeout(function() {
+                    if (self.flyType === "in") {
+                        self.flyOut();
+                    } else {
+                        self.flyIn();
+                    }
+                }, 3000);
+            });
+
+            this.flyIn();
         },
 
         //===========================================================================
@@ -387,11 +424,12 @@ define(function() {
                 var item = this.list[i];
 
                 var p = this.data.list[i];
-                item.position.x = p.x;
-                item.position.y = p.y;
-                item.position.z = p.z;
-                item.material.opacity = this.data.opacity;
-
+                if (p) {
+                    item.position.x = p.x;
+                    item.position.y = p.y;
+                    item.position.z = p.z;
+                    //item.material.opacity = this.data.opacity;
+                }
             }
 
             /*
